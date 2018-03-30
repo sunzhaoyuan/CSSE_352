@@ -36,6 +36,9 @@ public class Dray : MonoBehaviour, IFacingMover, IKeyMaster
 	public eMode mode = eMode.idle;
 	public int numKeys = 0;
 	public bool invincible = false;
+	public bool hasGrappler = false;
+	public Vector3 lastSafeLoc;
+	public int lastSafeFacing;
 
 	[SerializeField]
 	private int _health;
@@ -76,6 +79,8 @@ public class Dray : MonoBehaviour, IFacingMover, IKeyMaster
 		anim = GetComponent<Animator> ();
 		inRm = GetComponent<InRoom> ();
 		health = maxHealth;
+		lastSafeLoc = transform.position; // The start position is safe.
+		lastSafeFacing = facing;
 	}
 
 	void Update ()
@@ -196,6 +201,8 @@ public class Dray : MonoBehaviour, IFacingMover, IKeyMaster
 				roomNum = rm;
 				transitionPos = InRoom.DOORS [(doorNum + 2) % 4]; // h
 				roomPos = transitionPos;
+				lastSafeLoc = transform.position; // b
+				lastSafeFacing = facing;
 				mode = eMode.transition; // i
 				transitionDone = Time.time + transitionDelay;
 			}
@@ -232,6 +239,40 @@ public class Dray : MonoBehaviour, IFacingMover, IKeyMaster
 			mode = eMode.knockback;
 			knockbackDone = Time.time + knockbackDuration;
 		}
+	}
+
+	void OnTriggerEnter (Collider colld)
+	{
+		PickUp pup = colld.GetComponent<PickUp> ();
+
+		if (pup == null)
+			return;
+
+		switch (pup.itemType) {
+		case PickUp.eType.health:
+			health = Mathf.Min (health + 2, maxHealth);
+			break;
+
+		case PickUp.eType.key:
+			keyCount++;
+			break;
+
+		case PickUp.eType.grappler: // c
+			hasGrappler = true;
+			break;
+		}
+
+		Destroy (colld.gameObject);
+	}
+
+	public void ResetInRoom (int healthLoss = 0)
+	{ // d
+		transform.position = lastSafeLoc;
+		facing = lastSafeFacing;
+		health -= healthLoss;
+
+		invincible = true; // Make Dray invincible
+		invincibleDone = Time.time + invincibleDuration;
 	}
 
 
