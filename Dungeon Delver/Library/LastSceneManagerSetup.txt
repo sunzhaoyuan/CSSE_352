@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/_Scene/_Scene_Eagle.unity
+- path: Assets/_Scene/_Scene_Hat.unity
   isLoaded: 1
   isActive: 1
